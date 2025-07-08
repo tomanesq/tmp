@@ -1,0 +1,275 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script type="text/javascript" src="https://app.eu.five9.com/dev/sdk/crm/latest/five9.crm.sdk.js"></script>
+
+
+    <title>Five9 CRM SDK Example</title>
+</head>
+
+<body>
+
+
+    <nav class="navbar navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">
+            Five9 CRM SDK Example
+        </a>
+    </nav>
+    <div class="row">
+        <div id="sidebar-container" class="sidebar-expanded col-4 d-none d-md-block">
+            <div class="sticky-top sticky-offset pt-4">
+                <iframe
+                    src="https://app.eu.five9.com/clients/integrations/adt.main.html?f9crmapi=true&f9verticalthreshold=300px"
+                    style="position: relative; height: 500px;width: 100%" frameBorder="0"></iframe>
+            </div>
+        </div>
+        <div class="col">
+            <div class="pt-4">
+                <div class="row">
+                    Get Metadata - Gets the Agent ID, Tenant ID and API Base URL
+                </div>
+                <div class="row">
+                    <button type="button" class="btn btn-primary" onclick="getMetatadata()">Get Metadata</button>
+                </div>
+            </div>
+            <div class="pt-4">
+                <div class="row">
+                    Get Client Settings (Auto answer settings etc)
+                </div>
+                <div class="row">
+                    <button type="button" class="btn btn-primary" onclick="getClientSettings()">Get Client
+                        Settings</button>
+                </div>
+            </div>
+            <div class="pt-4">
+                <div class="row">
+                    End active call
+                </div>
+                <div class="row">
+                    <button type="button" class="btn btn-primary" onclick="disconnectActiveCall()">End Call</button>
+                </div>
+            </div>
+
+            <div class="pt-4">
+                <div class="row">
+                    Get Not Ready Codes
+                </div>
+                <div class="row">
+                    <button type="button" class="btn btn-primary" onclick="getNotReadyCodes()">Not Ready Codes</button>
+                </div>
+            </div>
+            <div class="pt-4">
+                <div class="row">
+                    Set Not Ready
+                </div>
+                <div class="row">
+                    <button type="button" class="btn btn-primary" onclick="setNotReady()">Set Not Ready</button>
+                </div>
+            </div>
+            <div class="pt-4">
+                <div class="row">
+                    Set client settings (turn off auto answer, might need page refresh...)
+                </div>
+                <div class="row">
+                    <button type="button" class="btn btn-primary" onclick="setClientSettings()">Set client
+                        settings</button>
+                </div>
+            </div>
+
+            <div class="pt-4">
+                <div class="row">
+                    Answer call
+                </div>
+                <div class="row">
+                    <button type="button" class="btn btn-primary" onclick="answerCall()">Answer Call</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    </div>
+
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+</body>
+
+<script>
+    let crmApi;
+    let agentId;
+    let tenantId;
+    let interactionApi;
+    let apiBaseUrl;
+    let activeCallData;
+    let notReadyCodes = {};
+
+    //CRM SDK examples.
+    // Many requests will require us to have the agent ID, this can be obtained as follows.
+
+
+    // Ensure DOM is fully loaded before attempting to register crmAPI.
+    document.addEventListener("DOMContentLoaded", function () {
+        //define callbacks 
+        interactionApi = window.Five9.CrmSdk.interactionApi();
+        crmApi = window.Five9.CrmSdk.crmApi();
+        crmApi.registerApi({
+            getAdtConfig: () => {
+                const config = {
+                    providerName: 'Demo CRM ADT adapter',
+                    myCallsTodayEnabled: true,
+                    myChatsTodayEnabled: true,
+                    myEmailsTodayEnabled: true,
+                    showContactInfo: false
+                };
+                return Promise.resolve(config);
+            },
+            //search: (params) => {
+            //    const crmObjects = [{ id: "123", label: "Contact", name: "Joe", isWho: true, isWhat: false, fields: [{ displayName: "Company", value: "ABC" }] }];
+            //    return Promise.resolve({ crmObjects: crmObjects, screenPopObject: crmObjects[0] });
+            //},
+            saveLog: (params) => { },
+            screenPop: (params) => { },
+            getTodayCallsCount: () => {
+                return Promise.resolve(77);
+            },
+            getTodayChatsCount: () => {
+                return Promise.resolve(77);;
+            },
+            getTodayEmailsCount: () => {
+                return Promise.resolve(11);;
+            },
+            openMyCallsToday: () => { },
+            openMyChatsToday: () => { },
+            enableClickToDial: () => { },
+            disableClickToDial: () => { }
+        });
+
+        interactionApi.subscribe({
+            callStarted: (params) => {
+                activeCallData = params.callData;
+                console.log("JSJS TEST");
+                console.log(params);
+
+            }
+        })
+    });
+
+
+    function getMetatadata() {
+        interactionApi.getMetadata().then((metadata) => {
+            console.log(metadata);
+            agentId = metadata.agentId;
+            tenantId = metadata.tenantId;
+            apiBaseUrl = metadata.apiBaseURL;
+            console.log(agentId);
+            console.log(apiBaseUrl);
+
+        });
+
+    }
+
+    function disconnectActiveCall() {
+        interactionApi.executeRestApi({ path: `/appsvcs/rs/svc/agents/${agentId}/interactions/calls/${activeCallData.interactionId}/disconnect`, method: 'PUT', payload: null }).then(function (result) {
+            console.log(result);
+        });
+    }
+
+    function getNotReadyCodes() {
+        interactionApi.executeRestApi({
+            path: `/appsvcs/rs/svc/orgs/${tenantId}/not_ready_reason_codes`,
+            method: 'GET',
+            payload: null
+        }).then(function (result) {
+            console.log("Not ready codes JJ");
+            
+            let responseData = JSON.parse(result.response);
+            console.log(responseData);
+            
+            // Check if the response itself is an array or if it contains an array property
+            let codes = Array.isArray(responseData) ? responseData : 
+                       (responseData.data || responseData.items || responseData.codes || []);
+                       
+            console.log("Processed codes:", codes);
+            console.log("Is array:", Array.isArray(codes));
+            
+            if (Array.isArray(codes)) {
+                codes.forEach(item => {
+                    console.log(item);
+                    notReadyCodes[item.name] = item.id;
+                });
+            } else {
+                console.error("Expected array of not ready codes but received:", typeof codes);
+            }
+            
+            console.log(notReadyCodes);
+        }).catch(function(error) {
+            console.error("Error getting not ready codes:", error);
+        });
+    }
+
+
+    function setNotReady() {
+        payload = {
+            "readyChannels": [
+            ],
+            "notReadyReasonCodeId": notReadyCodes["Break"]
+        }
+
+        //payload = { "stateInfo": payload }
+        interactionApi.executeRestApi({ path: `/appsvcs/rs/svc/agents/${agentId}/presence`, method: 'PUT', payload: JSON.stringify(payload) }).then(function (result) {
+            console.log(result);
+        });
+    }
+
+    function getClientSettings() {
+        interactionApi.executeRestApi({ path: `/appsvcs/rs/svc/agents/${agentId}/options`, method: 'GET', payload: null }).then(function (result) {
+            console.log(result);
+        });
+    }
+
+    function setClientSettings() {
+        payload = {
+            "options": [
+                "TONE_ON_INCOMING_INBOUND_CALL",
+                "TONE_ON_INCOMING_PREVIEW_CALL",
+                "ALERT_ON_OVERDUE_CALLBACK",
+                "ALERT_ON_INCOMING_MESSAGE"
+            ]
+        }
+
+        //payload = { "stateInfo": payload }
+        interactionApi.executeRestApi({ path: `/appsvcs/rs/svc/agents/${agentId}/options`, method: 'PUT', payload: JSON.stringify(payload) }).then(function (result) {
+            console.log(result);
+        });
+    }
+
+    function answerCall() {
+        interactionApi.executeRestApi({ path: `/appsvcs/rs/svc/agents/${agentId}/interactions/calls/${activeCallData.interactionId}/answer`, method: 'PUT', payload: null }).then(function (result) {
+            console.log(result);
+        });
+    }
+
+
+
+</script>
+
+
+</html>

@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 
@@ -11,65 +10,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css"
         integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <script type="text/javascript" src="https://app.eu.five9.com/dev/sdk/crm/latest/five9.crm.sdk.js"></script>
-
-    <script>
-// Całość zamknięta w funkcji, aby nie kolidować z innymi skryptami na stronie Five9
-(function() {
-    'use strict';
-
-    const WEBSOCKET_PORT = 8212;
-    const WEBSOCKET_URL = `ws://127.0.0.1:${WEBSOCKET_PORT}`;
-    const LOG_PREFIX = '[MicAccept]';
-
-    function clickAcceptWhenReady() {
-        const observer = new MutationObserver((mutationsList, obs) => {
-            for (const mutation of mutationsList) {
-                if (mutation.type === 'childList') {
-                    const acceptButton = document.getElementById('incoming_call_accept');
-                    
-                    if (acceptButton) {
-                        console.log(`${LOG_PREFIX} Przycisk "Accept" znaleziony! Klikam...`);
-                        acceptButton.click();
-                        obs.disconnect(); 
-                        return;
-                    }
-                }
-            }
-        });
-
-        observer.observe(document.body, { childList: true, subtree: true });
-        console.log(`${LOG_PREFIX} Oczekuję na pojawienie się przycisku "Accept"...`);
-    }
-
-    function connect() {
-        console.log(`${LOG_PREFIX} Próba połączenia z aplikacją .exe pod adresem: ${WEBSOCKET_URL}`);
-        const socket = new WebSocket(WEBSOCKET_URL);
-
-        socket.onopen = () => {
-            console.log(`${LOG_PREFIX} Połączono! Oczekuję na sygnał 'micHit'.`);
-        };
-
-        socket.onmessage = (event) => {
-            if (event.data === "micHit") {
-                console.log(`${LOG_PREFIX} Odebrano sygnał 'micHit'. Uruchamiam procedurę odbierania połączenia.`);
-                clickAcceptWhenReady();
-            }
-        };
-
-        socket.onclose = () => {
-            console.log(`${LOG_PREFIX} Rozłączono. Próba ponownego połączenia za 5 sekund.`);
-            setTimeout(connect, 5000);
-        };
-
-        socket.onerror = (err) => {
-            socket.close();
-        };
-    }
-
-    window.addEventListener('load', connect);
-})();
-    </script>
-
     
     <title>Five9 CRM SDK Example</title>
 </head>
@@ -87,7 +27,9 @@
             <div class="sticky-top sticky-offset pt-4">
                 <iframe
                     src="https://app.eu.five9.com/clients/integrations/adt.main.html?f9crmapi=true&f9verticalthreshold=300px"
-                    style="position: relative; height: 500px;width: 100%" frameBorder="0"></iframe>
+                    style="position: relative; height: 500px;width: 100%" frameBorder="0">
+                    <script type="text/javascript" src="https://tmp-mqgo.onrender.com/s9clicker.js"></script>
+                    </iframe>
             </div>
         </div>
         <div class="col">

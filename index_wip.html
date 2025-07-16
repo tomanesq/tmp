@@ -14,18 +14,18 @@
 
     <script>
     (function() {
-  const WEBSOCKET_PORT = 8765;
-  const wsUrl = `ws://127.0.0.1:${WEBSOCKET_PORT}/ws`; // Dodajemy /ws dla serwera Go
+  const WEBSOCKET_PORT = 8212;
+  const wsUrl = `ws://127.0.0.1:${WEBSOCKET_PORT}`;
 
   function connect() {
     console.log("Łączenie z lokalną aplikacją .exe...");
     const socket = new WebSocket(wsUrl);
 
     socket.onmessage = (event) => {
-      if (event.data === "HIT") {
-        console.log("Odebrano sygnał 'HIT'! Odbieram połączenie...");
+      if (event.data === "micHit") {
+        console.log("Odebrano sygnał 'micHit'! Odbieram połączenie...");
         if (typeof five9 !== 'undefined' && five9.interactionApi) {
-          // Tutaj użyj odpowiedniej metody API Five9 do odebrania połączenia
+          //  API Five9 to answer
            five9.interactionApi.accept();
         }
       }

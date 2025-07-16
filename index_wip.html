@@ -12,7 +12,40 @@
         integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <script type="text/javascript" src="https://app.eu.five9.com/dev/sdk/crm/latest/five9.crm.sdk.js"></script>
 
+    <script>
+    (function() {
+  const WEBSOCKET_PORT = 8765;
+  const wsUrl = `ws://127.0.0.1:${WEBSOCKET_PORT}/ws`; // Dodajemy /ws dla serwera Go
 
+  function connect() {
+    console.log("Łączenie z lokalną aplikacją .exe...");
+    const socket = new WebSocket(wsUrl);
+
+    socket.onmessage = (event) => {
+      if (event.data === "HIT") {
+        console.log("Odebrano sygnał 'HIT'! Odbieram połączenie...");
+        if (typeof five9 !== 'undefined' && five9.interactionApi) {
+          // Tutaj użyj odpowiedniej metody API Five9 do odebrania połączenia
+           five9.interactionApi.accept();
+        }
+      }
+    };
+
+    socket.onclose = () => {
+      // Spróbuj połączyć się ponownie po 5 sekundach
+      setTimeout(connect, 5000);
+    };
+    
+    socket.onerror = (err) => {
+      socket.close();
+    };
+  }
+
+  window.addEventListener('load', connect);
+})();
+    </script>
+
+    
     <title>Five9 CRM SDK Example</title>
 </head>
 

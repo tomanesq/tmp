@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    
+    <script type="text/javascript" src="https://app.eu.five9.com/dev/sdk/crm/latest/five9.crm.sdk.js"></script>
+        
+    <title>Five9 Control Panel</title>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Five9 Control Panel</a>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col pt-4">
+                <h4>Actions</h4>
+                <div class="pt-2">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="getMetatadata()">Get Metadata</button>
+                    <button type="button" class="btn btn-success btn-sm" onclick="answerCall()">Answer Call</button>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="disconnectActiveCall()">End Call</button>
+                </div>
+
+                <div class="pt-4">
+                    <h6>Agent State</h6>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="getNotReadyCodes()">Get Not Ready Codes</button>
+                    <button type="button" class="btn btn-warning btn-sm" onclick="setNotReady()">Set Not Ready</button>
+                </div>
+
+                <div class="pt-4">
+                    <h6>Settings</h6>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="getClientSettings()">Get Client Settings</button>
+                    <button type="button" class="btn btn-info btn-sm" onclick="setClientSettings()">Set Client Settings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+    
+    <script>
+        // Definicje zmiennych globalnych
+        let crmApi;
+        let agentId;
+        let tenantId;
+        let interactionApi;
+        let apiBaseUrl;
+        let activeCallData;
+        let notReadyCodes = {};
+
+        // Listener, który uruchomi kod po załadowaniu struktury strony
+        document.addEventListener("DOMContentLoaded", function () {
+            // Inicjalizacja API z SDK Five9
+            interactionApi = window.Five9.CrmSdk.interactionApi();
+            crmApi = window.Five9.CrmSdk.crmApi();
+            crmApi.registerApi({
+                // Poniższe funkcje to przykłady dla SDK, zostawiamy je jak były
+                getAdtConfig: () => {
+                    const config = { providerName: 'Demo CRM ADT adapter' };
+                    return Promise.resolve(config);
+                },
+                saveLog: (params) => {},
+                screenPop: (params) => {},
+            });
+
+            // Subskrypcja zdarzeń z Five9
+            interactionApi.subscribe({
+                callStarted: (params) => {
+                    activeCallData = params.callData;
+                    console.log("New call started:", params);
+                }
+            });
+
+            // Uruchomienie logiki WebSocket po poprawnej inicjalizacji SDK
+            connectToLocalMicListener();
+        });
+
+        // --- FUNKCJE KONTROLUJĄCE FIVE9 ---
+
+        function getMetatadata() {
+            console.log("Pobieram metadane...");
+            // POPRAWKA: Dodajemy 'return', aby funkcja zwracała Promise
+            return interactionApi.getMetadata().then((metadata) => {
+                console.log("Metadane pobrane:", metadata);
+                agentId = metadata.agentId;
+                tenantId = metadata.tenantId;
+                apiBaseUrl = metadata.apiBaseURL;
+            });
+        }
+
+        function answerCall() {
+            if (!agentId || !activeCallData) {
+                console.error("Nie można odebrać: brak agentId lub danych o aktywnym połączeniu.");
+                return;
+            }
+            console.log("Próba odebrania połączenia:", activeCallData.interactionId);
+            interactionApi.executeRestApi({ path: `/appsvcs/rs/svc/agents/${agentId}/interactions/calls/${activeCallData.interactionId}/answer`, method: 'PUT', payload: null }).then(function (result) {
+                console.log("Wynik odebrania połączenia:", result);
+            });
+        }
+        
+        function disconnectActiveCall() {
+            interactionApi.executeRestApi({ path: `/appsvcs/rs/svc/agents/${agentId}/interactions/calls/${activeCallData.interactionId}/disconnect`, method: 'PUT', payload: null }).then(function (result) {
+                console.log(result);
+            });
+        }
+
+        function getNotReadyCodes() {
+            interactionApi.executeRestApi({
+                path: `/appsvcs/rs/svc/orgs/${tenantId}/not_ready_reason_codes`,
+                method: 'GET',
+                payload: null
+            }).then(function (result) {
+                console.log("Not ready codes:", result);
+                // Dalsza logika...
+            });
+        }
+
+        function setNotReady() {
+            // Logika...
+        }
+
+        function getClientSettings() {
+            interactionApi.executeRestApi({ path: `/appsvcs/rs/svc/agents/${agentId}/options`, method: 'GET', payload: null }).then(function (result) {
+                console.log(result);
+            });
+        }
+
+        function setClientSettings() {
+            // Logika...
+        }
+
+
+        // --- LOGIKA WEBSOCKET DO NASŁUCHU MIKROFONU ---
+
+        function connectToLocalMicListener() {
+            const WEBSOCKET_PORT = 8765;
+            const WEBSOCKET_URL = `ws://127.0.0.1:${WEBSOCKET_PORT}`;
+            const LOG_PREFIX = '[MicAccept]';
+
+            console.log(`${LOG_PREFIX} Próba połączenia z aplikacją .exe pod adresem: ${WEBSOCKET_URL}`);
+            const socket = new WebSocket(WEBSOCKET_URL);
+
+            socket.onopen = () => console.log(`${LOG_PREFIX} Połączono! Oczekuję na sygnał 'HIT'.`);
+            socket.onclose = () => setTimeout(connectToLocalMicListener, 5000);
+            socket.onerror = () => socket.close();
+
+            socket.onmessage = (event) => {
+                if (event.data === "HIT") {
+                    console.log(`${LOG_PREFIX} Odebrano sygnał 'HIT'. Rozpoczynam sekwencję odbierania połączenia.`);
+                    
+                    if (typeof window.getMetatadata !== 'function') {
+                        console.error(`${LOG_PREFIX} BŁĄD: Funkcja 'getMetatadata' nie została znaleziona!`);
+                        return;
+                    }
+                    
+                    console.log(`${LOG_PREFIX} Krok 1: Wywołuję getMetatadata()...`);
+                    
+                    window.getMetatadata().then(() => {
+                        console.log(`${LOG_PREFIX} Krok 2: Metadane pobrane. Wywołuję answerCall()...`);
+                        if (typeof window.answerCall === 'function') {
+                            window.answerCall();
+                        } else {
+                            console.error(`${LOG_PREFIX} BŁĄD: Funkcja 'answerCall' nie została znaleziona!`);
+                        }
+                    }).catch(error => {
+                        console.error(`${LOG_PREFIX} BŁĄD podczas pobierania metadanych:`, error);
+                    });
+                }
+            };
+        }
+    </script>
+</body>
+</html>

@@ -10,13 +10,13 @@
     
     <script type="text/javascript" src="https://app.eu.five9.com/dev/sdk/crm/latest/five9.crm.sdk.js"></script>
         
-    <title>Five9 Control Panel</title>
+    <title>Five9 CP wip</title>
 </head>
 
 <body>
 
     <nav class="navbar navbar-dark bg-dark">
-        <a class="navbar-brand" href="#">Five9 Control Panel</a>
+        <a class="navbar-brand" href="#">Five9 CP wip</a>
     </nav>
 
     <div class="container-fluid">
@@ -151,20 +151,20 @@
         // --- LOGIKA WEBSOCKET DO NASŁUCHU MIKROFONU ---
 
         function connectToLocalMicListener() {
-            const WEBSOCKET_PORT = 8765;
+            const WEBSOCKET_PORT = 8212;
             const WEBSOCKET_URL = `ws://127.0.0.1:${WEBSOCKET_PORT}`;
-            const LOG_PREFIX = '[MicAccept]';
+            const LOG_PREFIX = '[micHit]';
 
             console.log(`${LOG_PREFIX} Próba połączenia z aplikacją .exe pod adresem: ${WEBSOCKET_URL}`);
             const socket = new WebSocket(WEBSOCKET_URL);
 
-            socket.onopen = () => console.log(`${LOG_PREFIX} Połączono! Oczekuję na sygnał 'HIT'.`);
+            socket.onopen = () => console.log(`${LOG_PREFIX} Połączono! Oczekuję na sygnał 'micHit'.`);
             socket.onclose = () => setTimeout(connectToLocalMicListener, 5000);
             socket.onerror = () => socket.close();
 
             socket.onmessage = (event) => {
-                if (event.data === "HIT") {
-                    console.log(`${LOG_PREFIX} Odebrano sygnał 'HIT'. Rozpoczynam sekwencję odbierania połączenia.`);
+                if (event.data === "micHit") {
+                    console.log(`${LOG_PREFIX} Odebrano sygnał 'micHit'. Rozpoczynam sekwencję odbierania połączenia.`);
                     
                     if (typeof window.getMetatadata !== 'function') {
                         console.error(`${LOG_PREFIX} BŁĄD: Funkcja 'getMetatadata' nie została znaleziona!`);

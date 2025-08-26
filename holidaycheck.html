@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>HolidayCheck</title>
+</head>
+<body>
+  <h2>ist das ein Feiertag?</h2>
+
+  <label>Ländercode (DE, FR, PL...): </label>
+  <input id="country" type="text" value="DE"><br><br>
+
+  <label>Datum: </label>
+  <input id="date" type="date" value="2025-08-26"><br><br>
+
+  <button onclick="checkHoliday()">check</button>
+
+  <p id="result"></p>
+
+  <script>
+    async function checkHoliday() {
+      const country = document.getElementById("country").value.trim().toUpperCase();
+      const dateToCheck = document.getElementById("date").value;
+      const year = new Date(dateToCheck).getFullYear();
+
+      const url = `https://date.nager.at/api/v3/PublicHolidays/${year}/${country}`;
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Błąd API");
+        const holidays = await res.json();
+
+        const holiday = holidays.find(h => h.date === dateToCheck);
+        if (holiday) {
+          document.getElementById("result").innerText =
+            `Ja, es ist ein Feiertag: ${holiday.localName} (${holiday.name})`;
+        } else {
+          document.getElementById("result").innerText =
+            "Das ist kein Feiertag in diesem Land.";
+        }
+      } catch (err) {
+        document.getElementById("result").innerText =
+          "Fehler bei der Überprüfung: " + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
